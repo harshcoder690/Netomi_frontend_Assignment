@@ -1,3 +1,5 @@
+const errorText = document.getElementById('errorMsg')
+
 function access() {
     const iframe = document.getElementById("iFramed");
     const iframedoc = iframe.contentDocument;
@@ -7,84 +9,60 @@ function access() {
     const phone = iframedoc.getElementById('phone')
     const dob = iframedoc.getElementById('dob')
     const submitBtn = iframedoc.getElementById('submitBtn')
-    const errorText = document.getElementById('errorMsg')
     const country = iframedoc.getElementById('country')
     const state = iframedoc.getElementById('state')
 
-    function nameLength() {
-        const usernameLength = username.value.length;
-        const error = username.value;
-        const errReason = "Length should be between 4-10 characters."
-        if (usernameLength < 5 || usernameLength > 11) {
-            errorShow(error, errReason);
-        }
-    }
+    result = {};
 
-    function validDob() {
-        const error = dob.value;
-        const errReason = "Use Valid Date";
-        let dateFormat = /^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/;
-
-        if (dateFormat.test(error)) {
+    const checkEmail = () => {
+        if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail.value)) {
             return true;
-        } else {
-            console.log(error);
-            errorShow(error, errReason);
         }
-    }
+        return false;
+    };
 
-    function phoneLength() {
-        const phoneNumLength = phone.value.length;
-        const error = phone.value;
-        const errReason = "mobile number should be of 10 digits."
-        if (phoneNumLength !== 10) {
-            errorShow(error, errReason);
+    function validateError() {
+        result = {}
+        if (username.value.length < 4 || username.value.length > 10 || username.value == "") {
+            const obj = { error: "length should be in between 4-10 characters" };
+            result["Name"] = obj;
         }
-    }
-
-    function validEmail() {
-        const error = mail.value;
-        const errReason = "should only support valid email address."
-        let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-
-        if (error.match(mailformat)) {
-            return true;
-        } else {
-            errorShow(error, errReason);
+        if (!checkEmail()) {
+            const obj = { Error: "only valid email address" };
+            result["Email"] = obj;
         }
-    }
-
-    function validCountry() {
-        const error = "Country";
-        const errReason = "is mandatory fields"
+        if (phone.value.length != 10 || phone.value == "") {
+            const obj = { Error: "number should be 10 digits" };
+            result["Contact number"] = obj;
+        }
+        if (dob.value == "") {
+            const obj = { Error: "mandatory field" };
+            result["Date"] = obj;
+        }
         if (country.value == "") {
-            errorShow(error, errReason);
+            const obj = { Error: "mandatory field" };
+            result["Country"] = obj;
         }
-    }
-
-    function validState() {
-        const errReason = "is mandatory fields"
         if (state.value == "") {
-            errorText.innerText = `Result: {"State": {"error": "${errReason}"}}`
+            const obj = { Error: "mandatory field" };
+            result["State"] = obj;
         }
-    }
 
-    function errorShow(errorPlace, errorReason) {
-        errorText.innerText = `Result: {"${errorPlace}": {"error": "${errorReason}"}}`
-    }
-
-    function allValidField() {
-        errorText.innerText = `Result: {"Success": "All fields are valid."}}`
+        if (Object.keys(result).length == 0) {
+            result["Success"] = "All fields are valid";
+        }
     }
 
     submitBtn.addEventListener('click', function(event) {
         event.preventDefault();
-        allValidField();
-        nameLength();
-        validDob();
-        validEmail();
-        phoneLength();
-        validState();
-        validCountry();
+        validateError()
+        window.postMessage({ messsage: "Result", value: result });
     });
+}
+
+window.addEventListener("message", showMessage);
+
+function showMessage(data) {
+    errorText.innerText =
+        data.data.messsage + ":" + JSON.stringify(data.data.value);
 }
